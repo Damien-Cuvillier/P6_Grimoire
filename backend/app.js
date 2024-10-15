@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
 const stuffRoutes= require('./routes/stuff')
+const userRoutes = require('./routes/user')
 
 const mongoURI = 'mongodb+srv://jimbob:69GS6BAT@cluster0.ytj4l.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
@@ -23,5 +24,6 @@ app.use((req, res, next) => {
   });
 
 app.use('/api/stuff', stuffRoutes);
+app.use('/api/auth', userRoutes);
 
 module.exports = app;
