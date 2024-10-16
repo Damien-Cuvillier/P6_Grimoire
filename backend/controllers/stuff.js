@@ -1,6 +1,7 @@
 const Book = require('../models/Book');
 const fs = require('fs').promises;
 const sharp = require('sharp');
+const mongoose = require('mongoose');
 
 exports.createBook = async (req, res, next) => {
   try {
@@ -66,32 +67,56 @@ exports.modifyBook= (req, res, next) => {
 }
 
 exports.rateBook = (req, res, next) => {
-  const bookId = req.params.id; // Récupération de l'ID du livre
-  const rating = req.body.rating; // Récupération de la note envoyée
+  const bookId = req.params.id;
+  const userId = req.auth.userId; // ID utilisateur de l'utilisateur authentifié
+  const userRating = req.body.rating;
 
-  // Vérifie si l'ID du livre est défini
-  if (!bookId) {
-    return res.status(400).json({ error: 'Book ID is required.' });
+  console.log('UserId:', userId);
+  console.log('BookId:', bookId);
+  console.log('UserRating:', userRating);
+
+  if (!userId) {
+      return res.status(400).json({ error: 'User ID is missing' });
+  }
+
+  if (!userRating || typeof userRating !== 'number' || userRating < 1 || userRating > 5) {
+      return res.status(400).json({ error: 'Invalid rating value' });
   }
 
   Book.findById(bookId)
-    .then(book => {
-      if (!book) {
-        return res.status(404).json({ error: 'Book not found.' });
-      }
-      // Ajoute la note au livre
-      if (!book.ratings) book.ratings = [];
-      book.ratings.push(rating);
-      return book.save();
-    })
-    .then(() => {
-      res.status(200).json({ message: 'Rating added successfully!' });
-    })
-    .catch(error => {
-      console.error('Error while rating book:', error); // Log pour le débogage
-      res.status(500).json({ error });
-    });
+      .then(book => {
+          if (!book) {
+              return res.status(404).json({ error: 'Book not found' });
+          }
+
+          console.log('Found Book:', book);
+
+          const existingRatingIndex = book.ratings.findIndex(rating => {
+              // Convert userId and rating.userId to strings for comparison
+              const ratingUserId = rating.userId.toString(); // Conversion en chaîne
+              console.log('Comparing rating.userId:', ratingUserId, 'with userId:', userId.toString());
+              return ratingUserId === userId.toString();
+          });
+
+          console.log('existingRatingIndex:', existingRatingIndex);
+
+          if (existingRatingIndex !== -1) {
+              console.log('Updating existing rating');
+              book.ratings[existingRatingIndex].grade = userRating;
+          } else {
+              console.log('Adding new rating');
+              book.ratings.push({ userId: userId, grade: userRating });
+          }
+
+          book.averageRating = (book.ratings.reduce((acc, curr) => acc + curr.grade, 0) / book.ratings.length).toFixed(2);
+
+          book.save()
+              .then(updatedBook => res.status(200).json(updatedBook))
+              .catch(error => res.status(400).json({ error }));
+      })
+      .catch(error => res.status(400).json({ error: `Error while rating book: ${error.message}` }));
 };
+
 
 
   
