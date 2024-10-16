@@ -1,44 +1,45 @@
 const Book = require('../models/Book');
-const fs = require('fs');
+const fs = require('fs').promises;
 const sharp = require('sharp');
-
-
 
 exports.createBook = async (req, res, next) => {
   try {
+    console.log('Received data:', req.body);
     const bookObject = JSON.parse(req.body.book);
+    console.log('Parsed book object:', bookObject);
     delete bookObject._id;
     delete bookObject._userId;
 
+    // Vérification des champs requis
     if (!bookObject.title || !bookObject.author || !bookObject.year || !bookObject.genre || !req.file) {
-      return res.status(400).json({ error: 'All fields are required.' });
+      return res.status(400).json({ error: 'All fields except price are required and an image must be provided.' });
     }
 
-    // Optimisation de l'image
-    const optimizedImagePath = `optimized-${req.file.filename}`;
-    await sharp(req.file.path)
-      .resize(206) // Redimensionner l'image à une largeur maximale de 206 pixels
-      .toFile(`images/${optimizedImagePath}`); // Enregistrer l'image optimisée
+    // Compression de l'image avec Sharp
+    const buffer = await sharp(req.file.buffer)
+      .webp({ quality: 80 }) // Vous pouvez ajuster la qualité ici
+      .toBuffer();
 
-    // Supprimer l'ancienne image
-    fs.unlink(req.file.path, (err) => {
-      if (err) {
-        console.error('Erreur lors de la suppression de l\'ancienne image:', err);
-      }
-    });
+    const filename = `${Date.now()}-${req.file.originalname.split(' ').join('_')}.webp`; // Nom de fichier optimisé
+
+    // Enregistrement de l'image compressée sur le disque
+    await fs.writeFile(`images/${filename}`, buffer);
 
     const book = new Book({
       ...bookObject,
       userId: req.auth.userId,
-      imageUrl: `images/${optimizedImagePath}` // Utiliser le chemin de l'image optimisée
+      imageUrl: `${req.protocol}://${req.get('host')}/images/${filename}`,
     });
 
     await book.save();
     res.status(201).json({ message: 'Livre enregistré !' });
   } catch (error) {
-    res.status(400).json({ error });
+    console.error('Error creating book:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+
 
     
 
