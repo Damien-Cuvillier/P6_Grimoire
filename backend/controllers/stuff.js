@@ -2,18 +2,45 @@ const Book = require('../models/Book');
 const fs = require('fs');
 
 exports.createBook = (req, res, next) => {
-   const bookObject = JSON.parse(req.body.book);
-   delete bookObject._id;
-   delete bookObject._userId;
+  try {
+    console.log('Received data:', req.body);
+    const bookObject = JSON.parse(req.body.book);
+    console.log('Parsed book object:', bookObject);
+    delete bookObject._id;
+    delete bookObject._userId;
+
+    // Vérification des champs requis sauf le champ `price`
+    if (!bookObject.title || !bookObject.author || !bookObject.year || !bookObject.genre || !req.file ) {
+      console.log('Missing required fields:', bookObject);
+      return res.status(400).json({ error: 'All fields except price are required.' });
+    }
+
+    console.log('Book object before saving:', bookObject);
+
+    let imageUrl = '';
+    if (req.file) {
+      imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
+    }
+
     const book = new Book({
-        ...bookObject,
-        userId: req.auth.userId,
-         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    })
+      ...bookObject,
+      userId: req.auth.userId,
+      imageUrl: imageUrl
+    });
+
     book.save()
-   .then(() => { res.status(201).json({message: 'Livre enregistré !'})})
-   .catch(error => { res.status(400).json( { error })})
+      .then(() => res.status(201).json({ message: 'Livre enregistré !' }))
+      .catch(error => {
+        console.error('Error saving book:', error);
+        res.status(400).json({ error });
+      });
+  } catch (error) {
+    console.error('Error parsing book object:', error);
+    res.status(400).json({ error: 'Invalid book data' });
+  }
 };
+
+
     
 
 exports.modifyBook= (req, res, next) => {
