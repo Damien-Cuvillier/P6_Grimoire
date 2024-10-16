@@ -1,45 +1,44 @@
 const Book = require('../models/Book');
 const fs = require('fs');
+const sharp = require('sharp');
 
-exports.createBook = (req, res, next) => {
+
+
+exports.createBook = async (req, res, next) => {
   try {
-    console.log('Received data:', req.body);
     const bookObject = JSON.parse(req.body.book);
-    console.log('Parsed book object:', bookObject);
     delete bookObject._id;
     delete bookObject._userId;
 
-    // Vérification des champs requis sauf le champ `price`
-    if (!bookObject.title || !bookObject.author || !bookObject.year || !bookObject.genre || !req.file ) {
-      console.log('Missing required fields:', bookObject);
-      return res.status(400).json({ error: 'All fields except price are required.' });
+    if (!bookObject.title || !bookObject.author || !bookObject.year || !bookObject.genre || !req.file) {
+      return res.status(400).json({ error: 'All fields are required.' });
     }
 
-    console.log('Book object before saving:', bookObject);
+    // Optimisation de l'image
+    const optimizedImagePath = `optimized-${req.file.filename}`;
+    await sharp(req.file.path)
+      .resize(206) // Redimensionner l'image à une largeur maximale de 206 pixels
+      .toFile(`images/${optimizedImagePath}`); // Enregistrer l'image optimisée
 
-    let imageUrl = '';
-    if (req.file) {
-      imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
-    }
+    // Supprimer l'ancienne image
+    fs.unlink(req.file.path, (err) => {
+      if (err) {
+        console.error('Erreur lors de la suppression de l\'ancienne image:', err);
+      }
+    });
 
     const book = new Book({
       ...bookObject,
       userId: req.auth.userId,
-      imageUrl: imageUrl
+      imageUrl: `images/${optimizedImagePath}` // Utiliser le chemin de l'image optimisée
     });
 
-    book.save()
-      .then(() => res.status(201).json({ message: 'Livre enregistré !' }))
-      .catch(error => {
-        console.error('Error saving book:', error);
-        res.status(400).json({ error });
-      });
+    await book.save();
+    res.status(201).json({ message: 'Livre enregistré !' });
   } catch (error) {
-    console.error('Error parsing book object:', error);
-    res.status(400).json({ error: 'Invalid book data' });
+    res.status(400).json({ error });
   }
 };
-
 
     
 
@@ -64,7 +63,37 @@ exports.modifyBook= (req, res, next) => {
         res.status(400).json({error})
     })
 }
-    
+
+exports.rateBook = (req, res, next) => {
+  const bookId = req.params.id; // Récupération de l'ID du livre
+  const rating = req.body.rating; // Récupération de la note envoyée
+
+  // Vérifie si l'ID du livre est défini
+  if (!bookId) {
+    return res.status(400).json({ error: 'Book ID is required.' });
+  }
+
+  Book.findById(bookId)
+    .then(book => {
+      if (!book) {
+        return res.status(404).json({ error: 'Book not found.' });
+      }
+      // Ajoute la note au livre
+      if (!book.ratings) book.ratings = [];
+      book.ratings.push(rating);
+      return book.save();
+    })
+    .then(() => {
+      res.status(200).json({ message: 'Rating added successfully!' });
+    })
+    .catch(error => {
+      console.error('Error while rating book:', error); // Log pour le débogage
+      res.status(500).json({ error });
+    });
+};
+
+
+  
 exports.deleteBook = (req, res, next) => {
     Book.findOne({ _id: req.params.id})
         .then(book =>{
