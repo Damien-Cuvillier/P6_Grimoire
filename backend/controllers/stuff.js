@@ -2,6 +2,8 @@ const Book = require('../models/Book');
 const fs = require('fs').promises;
 const sharp = require('sharp');
 const mongoose = require('mongoose');
+const path = require('path');
+
 
 exports.createBook = async (req, res, next) => {
   try {
@@ -120,24 +122,44 @@ exports.rateBook = (req, res, next) => {
 
 
   
-exports.deleteBook = (req, res, next) => {
-    Book.findOne({ _id: req.params.id})
-        .then(book =>{
-            if (book.userId != req.auth.userId){
-                res.status(401).json({message: 'Non autorisé'})
-            } else {
-                const filename= book.imageUrl.split('/images/')[1];
-                fs.unlink(`images/${filename}`, ()=> {
-                    Book.deleteOne({_id: req.params.id})
-                    .then(() => {res.status(200).json({message: 'Livre supprimé'})})
-                    .catch(error => res.status(401).json({error}))
-                })
-            }
-        })
-        .catch( error =>{
-            res.status(500).json({error})
-        })
+exports.deleteBook = async (req, res, next) => {
+  try {
+    console.log('Début de la fonction deleteBook');
+    const book = await Book.findOne({ _id: req.params.id });
+    
+    if (book.userId != req.auth.userId) {
+      console.log('Utilisateur non autorisé');
+      return res.status(401).json({ message: 'Non autorisé' });
+    }
+
+    console.log('Utilisateur autorisé');
+    const filename = book.imageUrl.split('/images/')[1];
+    const filePath = path.join(__dirname, '../images/', filename);
+
+    console.log(`Chemin du fichier : ${filePath}`);
+
+    try {
+      await fs.unlink(filePath);
+      console.log(`Image supprimée : ${filePath}`);
+    } catch (err) {
+      console.error('Erreur lors de la suppression de l\'image :', err);
+      return res.status(500).json({ error: 'Erreur lors de la suppression de l\'image' });
+    }
+
+    try {
+      await Book.deleteOne({ _id: req.params.id });
+      console.log(`Livre avec ID ${req.params.id} supprimé.`);
+      res.status(200).json({ message: 'Livre supprimé' });
+    } catch (err) {
+      console.error('Erreur lors de la suppression du livre :', err);
+      res.status(500).json({ error: 'Erreur lors de la suppression du livre' });
+    }
+  } catch (error) {
+    console.error('Erreur lors de la recherche du livre :', error);
+    res.status(500).json({ error });
   }
+};
+
 
 exports.getOneBook = (req, res, next) => {
     Book.findOne({
