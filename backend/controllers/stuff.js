@@ -176,6 +176,19 @@ exports.getOneBook = (req, res, next) => {
       }
     );
   }
+  
+  exports.getBestRatedBooks = async (req, res) => {
+    console.log('Endpoint /bestrating a été appelé'); // Ajoutez ceci
+    try {
+        const bestRatedBooks = await Book.find({})
+            .sort({ averageRating: -1 })
+            .limit(3);
+        res.status(200).json(bestRatedBooks);
+    } catch (error) {
+        console.error('Erreur lors de la récupération des livres :', error); // Ajoutez ceci
+        res.status(500).json({ error: 'Erreur lors de la récupération des livres' });
+    }
+};
 
 exports.getAllBooks = (req, res, next) => {
     Book.find().then(
