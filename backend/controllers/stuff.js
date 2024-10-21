@@ -137,6 +137,7 @@ exports.rateBook = (req, res, next) => {
     .catch(error => res.status(400).json({ error: `Error while rating book: ${error.message}` }));
 };
 
+
 // Fonction pour supprimer un livre
 exports.deleteBook = async (req, res, next) => {
   try {
@@ -195,8 +196,15 @@ exports.getOneBook = (req, res, next) => {
 // Fonction pour obtenir tous les livres
 exports.getAllBooks = (req, res, next) => {
   Book.find()
-    .then(books => res.status(200).json(books)) // Réponse avec la liste des livres
-    .catch(error => res.status(400).json({ error })); 
+    .then(books => {
+      // Conversion de l'année en nombre pour chaque livre
+      const updatedBooks = books.map(book => ({
+        ...book._doc,
+        year: Number(book.year)
+      }));
+      res.status(200).json(updatedBooks);
+    })
+    .catch(error => res.status(400).json({ error }));
 };
 
 // Fonction pour obtenir les livres les mieux notés

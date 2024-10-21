@@ -11,7 +11,7 @@ const bookSchema = mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, required: true }, // Identifiant de l'utilisateur ayant ajouté le livre
     title: { type: String, required: true },                         // Titre du livre
     author: { type: String, required: true },                        // Auteur du livre
-    year: { type: String, required: true },                          // Année de publication du livre
+    year: { type: Number, required: true },                          // Année de publication du livre
     genre: { type: String, required: true },                         // Genre du livre
     ratings: [ratingSchema],                                         // Tableau des évaluations (schéma d'évaluation défini ci-dessus)
     averageRating: { type: Number, default: 0 },                     // Note moyenne du livre, initialisée à 0
