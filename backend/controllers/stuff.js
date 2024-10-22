@@ -21,23 +21,12 @@ exports.createBook = async (req, res, next) => {
     if (!bookObject.title || !bookObject.author || !bookObject.year || !bookObject.genre || !req.file) {
       return res.status(400).json({ error: 'All fields except price are required and an image must be provided.' });
     }
-
-    // Compression de l'image avec Sharp
-    const buffer = await sharp(req.file.buffer)
-      .webp({ quality: 80 }) // ajuster la qualité ici
-      .toBuffer(); // Conversion en buffer
-
-    // Création d'un nom de fichier unique pour l'image
-    const filename = `${Date.now()}-${req.file.originalname.split(' ').join('_')}.webp`;
-
-    // Enregistrement de l'image compressée sur le disque
-    await fs.writeFile(`images/${filename}`, buffer);
-
+   
     // Création d'une nouvelle instance de Book avec les données fournies
     const book = new Book({
       ...bookObject, // Propriétés du livre
       userId: req.auth.userId, // ID de l'utilisateur authentifié
-      imageUrl: `${req.protocol}://${req.get('host')}/images/${filename}`, // URL de l'image
+      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`, // URL de l'image
     });
 
     await book.save(); // Sauvegarde du livre dans la base de données
@@ -108,34 +97,29 @@ exports.rateBook = (req, res, next) => {
       console.log('Found Book:', book);
 
       // Vérification de l'existence d'une notation précédente par l'utilisateur
-      const existingRatingIndex = book.ratings.findIndex(rating => {
-        // Conversion de userId et rating.userId en chaînes pour la comparaison
-        const ratingUserId = rating.userId.toString(); 
-        console.log('Comparing rating.userId:', ratingUserId, 'with userId:', userId.toString());
-        return ratingUserId === userId.toString();
-      });
+      const existingRating = book.ratings.some(rating => rating.userId.toString() === userId.toString());
 
-      console.log('existingRatingIndex:', existingRatingIndex);
-
-      // Mise à jour ou ajout de la note
-      if (existingRatingIndex !== -1) {
-        console.log('Updating existing rating');
-        book.ratings[existingRatingIndex].grade = userRating; // Mise à jour de la note existante
-      } else {
-        console.log('Adding new rating');
-        book.ratings.push({ userId: userId, grade: userRating }); // Ajout d'une nouvelle note
+      if (existingRating) {
+        return res.status(403).json({ error: 'User has already rated this book' });
       }
+
+      // Ajout de la nouvelle note
+      console.log('Adding new rating');
+      book.ratings.push({ userId: userId, grade: userRating }); // Ajout d'une nouvelle note
 
       // Calcul de la nouvelle note moyenne
       book.averageRating = (book.ratings.reduce((acc, curr) => acc + curr.grade, 0) / book.ratings.length).toFixed(2);
+      
+      console.log(book);
 
       // Sauvegarde des modifications du livre
       book.save()
-        .then(updatedBook => res.status(200).json(updatedBook)) // Réponse avec le livre mis à jour
+        .then(() => res.status(200).json(book)) // Réponse avec le livre mis à jour
         .catch(error => res.status(400).json({ error })); 
     })
     .catch(error => res.status(400).json({ error: `Error while rating book: ${error.message}` }));
 };
+
 
 
 // Fonction pour supprimer un livre

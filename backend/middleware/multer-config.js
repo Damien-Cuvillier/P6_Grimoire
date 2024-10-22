@@ -1,4 +1,6 @@
-const multer = require('multer'); // Importation de Multer,pour la gestion des fichiers
+const multer = require('multer'); // Importation de Multer pour la gestion des fichiers
+const sharp = require('sharp'); // Importation de Sharp pour l'optimisation des images
+const fs = require('fs'); // Importation de fs pour la gestion des fichiers système
 
 // Définir les types MIME acceptés et leurs extensions de fichier correspondantes
 const MIME_TYPES = {
@@ -8,18 +10,37 @@ const MIME_TYPES = {
 };
 
 // Configuration du stockage des fichiers avec Multer
-const storage = multer.diskStorage({
-  // Définir la destination des fichiers
-  destination: (req, file, callback) => {
-    callback(null, 'images'); // Les fichiers seront stockés dans le dossier 'images'
-  },
-  // Définir le nom du fichier
-  filename: (req, file, callback) => {
-    // Générer un nom de fichier unique avec le nom d'origine sans espaces, suivi d'un timestamp et de l'extension appropriée
-    const name = file.originalname.split(' ').join('_');
-    const extension = MIME_TYPES[file.mimetype];
-    callback(null, name + Date.now() + '.' + extension);
-  }
-});
+const storage = multer.memoryStorage(); // Utiliser la mémoire pour que les images soient temporaires
 
-module.exports = multer({ storage: storage }).single('image'); // Gérer un seul fichier image par requête
+// Middleware Multer pour gérer le stockage des fichiers
+const upload = multer({ storage: storage }).single('image');
+
+// Middleware pour optimiser les images après le téléchargement
+const optimizeImage = async (req, res, next) => {
+  if (!req.file) {
+    return next(); // Passer au middleware suivant si aucun fichier n'est présent
+  }
+
+  const name = req.file.originalname.split(' ').join('_');
+  const extension = MIME_TYPES[req.file.mimetype];
+  const optimizedFileName = `${name}${Date.now()}.webp`;
+
+  try {
+    console.log('Optimizing image...');
+    await sharp(req.file.buffer)
+      .resize(800) // Redimensionner l'image à une largeur de 800px (ajuste selon tes besoins)
+      .toFormat('webp') // Convertir l'image au format WebP
+      .toFile(`images/${optimizedFileName}`);
+
+    // Ajouter le nom du fichier optimisé à la requête
+    req.file.filename = optimizedFileName;
+    console.log('Image optimized:', optimizedFileName);
+    next(); // Passer au middleware suivant
+  } catch (err) {
+    console.error('Error optimizing image:', err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// Exporter le middleware d'upload et d'optimisation
+module.exports = { upload, optimizeImage };

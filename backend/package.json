@@ -31,6 +31,7 @@
     "cookie": "^0.7.1",
     "cookie-signature": "^1.0.6",
     "core-util-is": "^1.0.3",
+    "cors": "^2.8.5",
     "debug": "^2.6.9",
     "define-data-property": "^1.1.4",
     "delegates": "^1.0.0",
@@ -62,6 +63,7 @@
     "has-symbols": "^1.0.3",
     "has-unicode": "^2.0.1",
     "hasown": "^2.0.2",
+    "helmet": "^8.0.0",
     "http-errors": "^2.0.0",
     "https-proxy-agent": "^5.0.1",
     "iconv-lite": "^0.4.24",
@@ -166,4 +168,5 @@
   "author": "",
   "license": "ISC",
   "description": ""
+  
 }
