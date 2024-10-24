@@ -18,7 +18,7 @@ const normalizePort = val => {
   return false;
 };
 
-// Normalisation du port à partir de la variable d'environnement ou utiliser '4000' par défaut
+// Normalisation du port à partir de la variable d'environnement
 const port = normalizePort(process.env.PORT);
 // Définir le port pour l'application Express
 app.set('port', port);

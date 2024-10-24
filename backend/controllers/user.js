@@ -48,7 +48,7 @@ exports.login = (req, res, next) => {
             token: jwt.sign(
               { userId: user._id }, // Payload du token contenant l'ID utilisateur
               process.env.JWT_SECRET, // Clé secrète pour signer le token
-              { expiresIn: '24h' } // Durée de validité du token
+              { expiresIn: '12h' } // Durée de validité du token
             )
           });
         })

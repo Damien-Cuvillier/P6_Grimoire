@@ -14,13 +14,13 @@ router.get('/bestrating', stuffCtrl.getBestRatedBooks);
 // Route pour obtenir un livre spécifique par son ID
 router.get('/:id', stuffCtrl.getOneBook);
 
-// Route pour créer un nouveau livre (authentification et gestion des fichiers requises)
+// Route pour créer un nouveau livre (Nécessite l'authentification, l'upload d'une image, et l'optimisation de cette image)
 router.post('/', auth, upload, optimizeImage, stuffCtrl.createBook); 
 
 // Route pour noter un livre spécifique (authentification requise)
 router.post('/:id/rating', auth, stuffCtrl.rateBook);
 
-// Route pour modifier un livre existant (authentification et gestion des fichiers requises)
+// Route pour modifier un livre existant (Nécessite l'authentification, l'upload d'une image, et l'optimisation de cette image)
 router.put('/:id', auth, upload, optimizeImage, stuffCtrl.modifyBook);
 
 // Route pour supprimer un livre spécifique (authentification requise)

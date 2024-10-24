@@ -12,28 +12,29 @@ const MIME_TYPES = {
 // Configuration du stockage des fichiers avec Multer
 const storage = multer.memoryStorage(); // Utiliser la mémoire pour que les images soient temporaires
 
-// Middleware Multer pour gérer le stockage des fichiers
-const upload = multer({ storage: storage }).single('image');
+// Middleware pour gérer le stockage des fichiers
+const upload = multer({ storage: storage }).single('image');//indique que seule une image doit être upload
 
 // Middleware pour optimiser les images après le téléchargement
 const optimizeImage = async (req, res, next) => {
-  if (!req.file) {
+  if (!req.file) { //Vérifie si un fichier a été upload
     return next(); // Passer au middleware suivant si aucun fichier n'est présent
   }
 
+  //Création d'un nom de fichier optimisé
   const name = req.file.originalname.split(' ').join('_');
   const extension = MIME_TYPES[req.file.mimetype];
   const optimizedFileName = `${name}${Date.now()}.webp`;
 
-  try {
-    console.log('Optimizing image...');
-    await sharp(req.file.buffer)
-      .resize(800) // Redimensionner l'image à une largeur de 800px (ajuste selon tes besoins)
+  try { //Optimisation de l'image
+    console.log('Optimizing image...'); 
+    await sharp(req.file.buffer) //Utilise sharp pour traiter l'image
+      .resize(600) // Redimensionner l'image à une largeur de 600px
       .toFormat('webp') // Convertir l'image au format WebP
-      .toFile(`images/${optimizedFileName}`);
+      .toFile(`images/${optimizedFileName}`); //Enregistre l'image optimisée dans le répertoire images avec le nom de fichier optimisé.
 
     // Ajouter le nom du fichier optimisé à la requête
-    req.file.filename = optimizedFileName;
+    req.file.filename = optimizedFileName; //Si l'optimisation réussit, le nom du fichier optimisé est ajouté
     console.log('Image optimized:', optimizedFileName);
     next(); // Passer au middleware suivant
   } catch (err) {

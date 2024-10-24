@@ -12,12 +12,12 @@ const app = express();
 // Middleware pour configurer les en-têtes CORS (Cross-Origin Resource Sharing)
 app.use((req, res, next) => {
   console.log(`Request Method: ${req.method}, Request URL: ${req.url}`);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.setHeader('Access-Control-Allow-Credentials', 'true'); 
+  res.setHeader('Access-Control-Allow-Origin', '*'); //Autorise toutes les origines
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization'); //En-têtes autorisés
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS'); //Spécifie les méthodes HTTP autorisées
+  res.setHeader('Access-Control-Allow-Credentials', 'true'); //Autorise les cookies cross-origin
   next();
-});
+0.});
 
 const stuffRoutes = require('./routes/stuff');
 const userRoutes = require('./routes/user');
