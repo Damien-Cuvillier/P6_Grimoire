@@ -23,7 +23,7 @@ const port = normalizePort(process.env.PORT);
 // Définir le port pour l'application Express
 app.set('port', port);
 
-// Fonction pour gérer les erreurs spécifiques liées à l'écoute du serveur
+// Fonction pour gérer les erreurs spécifiques à l'écoute du serveur
 const errorHandler = error => {
   // Vérifier si l'erreur est liée à l'écoute
   if (error.syscall !== 'listen') {

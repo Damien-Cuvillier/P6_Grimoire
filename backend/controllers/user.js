@@ -32,14 +32,14 @@ exports.login = (req, res, next) => {
   User.findOne({ email: req.body.email })
     .then(user => {
       if (!user) {
-        console.log('User not found'); // Journalisation si l'utilisateur n'est pas trouvé
+        console.log('User not found'); 
         return res.status(401).json({ error: 'Utilisateur non trouvé !' }); 
       }
       // Comparaison du mot de passe fourni avec le mot de passe haché dans la base de données
       bcrypt.compare(req.body.password, user.password)
         .then(valid => {
           if (!valid) {
-            console.log('Invalid password'); // Journalisation si le mot de passe est incorrect
+            console.log('Invalid password'); 
             return res.status(401).json({ error: 'Mot de passe incorrect !' }); 
           }
           // Réponse réussie avec l'ID utilisateur et le token JWT

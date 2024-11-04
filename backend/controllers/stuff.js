@@ -69,7 +69,7 @@ exports.modifyBook = (req, res, next) => {
 // Fonction pour noter un livre
 exports.rateBook = (req, res, next) => {
   const bookId = req.params.id; // ID du livre à noter
-  const userId = req.auth.userId; // ID utilisateur de l'utilisateur authentifié
+  const userId = req.auth.userId; // ID de l'utilisateur authentifié
   const userRating = req.body.rating; // Note fournie par l'utilisateur
 
   // Affichage des informations de notation
@@ -195,7 +195,7 @@ exports.getAllBooks = (req, res, next) => {
 exports.getBestRatedBooks = (req, res, next) => {
   Book.find()
     .sort({ averageRating: -1 }) // Trie les livres par note moyenne décroissante
-    .limit(3) // Limite à 5 livres les mieux notés
+    .limit(3) // Limite à 3 livres les mieux notés
     .then(books => res.status(200).json(books)) // Réponse avec la liste des livres
     .catch(error => res.status(400).json({ error })); 
 };
