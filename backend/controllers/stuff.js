@@ -1,8 +1,6 @@
 // Importation des modules nécessaires
 const Book = require('../models/Book'); // Modèle Book pour interagir avec la base de données
 const fs = require('fs').promises; // Promises pour les opérations de fichiers
-const sharp = require('sharp'); // Bibliothèque pour le traitement d'images
-const mongoose = require('mongoose'); // Mongoose pour interagir avec MongoDB
 const path = require('path'); // Module pour gérer les chemins de fichiers
 
 // Fonction pour créer un livre
@@ -19,7 +17,7 @@ exports.createBook = async (req, res, next) => {
 
     // Vérification des champs requis
     if (!bookObject.title || !bookObject.author || !bookObject.year || !bookObject.genre || !req.file) {
-      return res.status(400).json({ error: 'All fields except price are required and an image must be provided.' });
+      return res.status(400).json({ error: 'All fields are required and an image must be provided.' });
     }
    
     // Création d'une nouvelle instance de Book avec les données fournies
